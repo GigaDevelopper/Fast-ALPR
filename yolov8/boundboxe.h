@@ -17,11 +17,12 @@ public:
     ~BoundBoxe();
 
     BoundBoxe &operator = (const BoundBoxe &other);
-    BoundBoxe &operator = (BoundBoxe &&other);
+    BoundBoxe &operator = (BoundBoxe &&other) noexcept;
 
     cv::Rect2i getBoxe()const;
     std::vector<Keypoint> getKeyPoints()const;
     std::uint8_t getKeyPointCount()const;
+    float getConfidence()const;
     Keypoint &operator[](std::uint8_t index);
     Keypoint operator[](std::uint8_t index)const;
 

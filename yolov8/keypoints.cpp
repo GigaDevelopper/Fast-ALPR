@@ -52,7 +52,7 @@ float Keypoint::getY() const
     return this->pos_.y;
 }
 
-const cv::Point2d &Keypoint::getPosition() const
+const cv::Point2f &Keypoint::getPosition() const
 {
     return this->pos_;
 }

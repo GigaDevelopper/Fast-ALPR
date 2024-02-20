@@ -19,16 +19,16 @@ public:
 
     float getX()const;
     float getY()const;
-    const cv::Point2d& getPosition()const;
+    const cv::Point2f &getPosition()const;
     float getConfidence()const;
 
     friend std::ostream &operator<<(std::ostream& out, const Keypoint& kp){
-        out <<"Point2D("<<kp.getX()<<","<<kp.getY()<<")";
+        out <<"Point2f("<<kp.getX()<<","<<kp.getY()<<")";
         return out;
     };
 
 private:
-    cv::Point2d pos_;//Position of points
+    cv::Point2f pos_;//Position of points
     float conf_;//confidence
 };
 
