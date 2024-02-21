@@ -5,7 +5,6 @@ using namespace cv;;
 int main()
 {
     auto model = YolovPose("/home/azmiddin/Projects/Fast-ALPR/models/pose_platen.onnx",cv::Size(640,320),0.5,0.6);
-
     // cv::VideoCapture cap("/home/azmiddin/Projects/Fast-ALPR/test_example.mp4");
     // while (cap.isOpened()){
     //     cv::Mat frame;
@@ -17,8 +16,9 @@ int main()
     //         ImgUtils::cropByBoundBoxes(frame,result);
     //     }
     // }
-    Mat frame = cv::imread("/home/azmiddin/Projects/Fast-ALPR/uzb_00128.jpg");
+    Mat frame = cv::imread("/home/azmiddin/Projects/Fast-ALPR/test/uzb_00003.jpg");
     ImgUtils::show(frame);
+
     if(!frame.empty())
     {           Mat image;
                 image = model.preprocces(frame);
@@ -27,8 +27,6 @@ int main()
                 ImgUtils::draw(result, frame);
                 ImgUtils::show(frame);
     }
-
-
 
     return 0;
 }
