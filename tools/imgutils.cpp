@@ -1,5 +1,4 @@
 #include "imgutils.h"
-#include <iostream>
 #include <vector>
 
 void ImgUtils::show(cv::Mat &image)
@@ -37,8 +36,8 @@ void ImgUtils::draw(std::vector<BoundBoxe> &detections, cv::Mat &image)
 
 cv::Mat ImgUtils::cropAndTransform(const cv::Mat &image, const std::vector<cv::Point2f> &points)
 {
-    constexpr int width = 320;
-    constexpr int height =150 ;
+    constexpr int width = 520;
+    constexpr int height =220 ;
 
     cv::Point2f srcPoint[] = {
         points[0],
@@ -57,10 +56,13 @@ cv::Mat ImgUtils::cropAndTransform(const cv::Mat &image, const std::vector<cv::P
     cv::Mat Matrix =  cv::getPerspectiveTransform(srcPoint,dstPoint);
     cv::Mat out,res;
     cv::warpPerspective(image,out,Matrix,cv::Size(width, height));
-    cv::fastNlMeansDenoisingColored(out,res,10,15,10,16);
-
-    cv::imwrite("ans.jpg",res);
-    return res;
+    cv::fastNlMeansDenoisingColored(out,res,7,15,7,16);
+    cv::Mat ans,gray,blur,binary;
+    cv::convertScaleAbs(res,ans,2.5);
+    cv::cvtColor(ans,gray,cv::COLOR_BGR2GRAY);
+    cv::GaussianBlur(gray,blur,cv::Size(7,7),0);
+    cv::threshold(blur,binary,180,255,cv::THRESH_BINARY_INV|cv::THRESH_OTSU);
+    return blur;
 }
 
 cv::Mat ImgUtils::cropByBoundBoxes(const cv::Mat &image, const std::vector<BoundBoxe> &boxes)
