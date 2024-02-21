@@ -24,6 +24,9 @@ public :
     static cv::Mat cropByBoundBoxes(const cv::Mat &image, const std::vector<BoundBoxe> &boxes);
 
     static cv::Mat deskew(cv::Mat image);
+
+    static cv::Mat getRotateCropImage(cv::Mat srcimage,
+                                      std::vector<cv::Point2f> &box);
 };
 
 

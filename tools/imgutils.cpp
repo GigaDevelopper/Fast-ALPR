@@ -1,5 +1,7 @@
 #include "imgutils.h"
+
 #include <vector>
+#include <cmath>
 
 void ImgUtils::show(cv::Mat &image)
 {
@@ -36,22 +38,27 @@ void ImgUtils::draw(std::vector<BoundBoxe> &detections, cv::Mat &image)
 
 cv::Mat ImgUtils::cropAndTransform(const cv::Mat &image, const std::vector<cv::Point2f> &points)
 {
-    constexpr int width = 520;
-    constexpr int height =220 ;
+    int width = static_cast<int>(std::sqrt(std::pow(points[0].x - points[1].x,2)) +
+                                 std::sqrt(std::pow(points[0].y - points[1].y,2)));
+
+    int height =static_cast<int>(std::sqrt(std::pow(points[0].x - points[3].x,2)) +
+                                  std::sqrt(std::pow(points[0].y - points[3].y,2)));
 
     cv::Point2f srcPoint[] = {
         points[0],
         points[1],
-        points[3],
-        points[2]
+        points[2],
+        points[3]
 
     };
+    width = std::max(width,300);
+    height = std::max(120,height);
 
     cv::Point2f dstPoint[] = {
-        cv::Point2f(0,0),
+        cv::Point2f(0.,0.),
         cv::Point2f(width,0),
+        cv::Point2f(width,height),
         cv::Point2f(0,height),
-        cv::Point2f(width,height)
     };
     cv::Mat Matrix =  cv::getPerspectiveTransform(srcPoint,dstPoint);
     cv::Mat out,res;
@@ -74,7 +81,7 @@ cv::Mat ImgUtils::cropByBoundBoxes(const cv::Mat &image, const std::vector<Bound
         {
             kp.push_back(cv::Point(kps.getX(),kps.getY()));
         }
-        auto it = ImgUtils::cropAndTransform(image, kp);
+        auto it = ImgUtils::getRotateCropImage(image, kp);
         ImgUtils::show(it);
     }
     return image;
@@ -106,4 +113,64 @@ cv::Mat ImgUtils::deskew(cv::Mat image){
     cv::warpAffine(image, rotated, M, size, cv::INTER_CUBIC, cv::BORDER_REPLICATE);
 
     return rotated;
+}
+
+cv::Mat ImgUtils::getRotateCropImage(cv::Mat srcimage, std::vector<cv::Point2f>& box)
+{
+    cv::Mat image;
+    srcimage.copyTo(image);
+    std::vector<cv::Point2f> points = box;
+
+    float x_collect[4] = {box[0].x, box[1].x, box[2].x, box[3].x};
+    float y_collect[4] = {box[0].y, box[1].y, box[2].y, box[3].y};
+
+    int left = int(*std::min_element(x_collect, x_collect + 4));
+    int right = int(*std::max_element(x_collect, x_collect + 4));
+    int top = int(*std::min_element(y_collect, y_collect + 4));
+    int bottom = int(*std::max_element(y_collect, y_collect + 4));
+
+    cv::Mat img_crop;
+    image(cv::Rect(left, top, right - left, bottom - top)).copyTo(img_crop);
+
+    for (int i = 0; i < points.size(); i++) {
+        points[i].x -= left;
+        points[i].y -= top;
+    }
+
+    int img_crop_width =
+        static_cast<int>(sqrt(pow(points[0].x - points[1].x, 2) +
+                              pow(points[0].y - points[1].y, 2)));
+    int img_crop_height =
+        static_cast<int>(sqrt(pow(points[0].x - points[3].x, 2) +
+                              pow(points[0].y - points[3].y, 2)));
+
+    cv::Point2f pts_std[4];
+    pts_std[0] = cv::Point2f(0., 0.);
+    pts_std[1] = cv::Point2f(img_crop_width, 0.);
+    pts_std[2] = cv::Point2f(img_crop_width, img_crop_height);
+    pts_std[3] = cv::Point2f(0.f, img_crop_height);
+
+    cv::Point2f pointsf[4];
+    pointsf[0] = cv::Point2f(points[0].x, points[0].y);
+    pointsf[1] = cv::Point2f(points[1].x, points[1].y);
+    pointsf[2] = cv::Point2f(points[2].x, points[2].y);
+    pointsf[3] = cv::Point2f(points[3].x, points[3].y);
+
+    cv::Mat M = cv::getPerspectiveTransform(pointsf, pts_std);
+
+    cv::Mat dst_img;
+    cv::warpPerspective(img_crop, dst_img, M,
+                        cv::Size(img_crop_width, img_crop_height),
+                        cv::BORDER_REPLICATE);
+
+    const float ratio = 4.5;
+    if (static_cast<float>(dst_img.rows) >=
+        static_cast<float>(dst_img.cols) * ratio) {
+        cv::Mat srcCopy = cv::Mat(dst_img.rows, dst_img.cols, dst_img.depth());
+        cv::transpose(dst_img, srcCopy);
+        cv::flip(srcCopy, srcCopy, 0);
+        return srcCopy;
+    } else {
+        return dst_img;
+    }
 }
